@@ -14,10 +14,8 @@ export interface VideoFormat {
   filesize: number;
   filesize_approx?: number;
   
-  // Adding properties needed by FormatSelector
-  id: string;
-  quality: string;
-  extension: string;
+  // Additional properties needed by FormatSelector
+  quality?: string;
   size: string;
   videoCodec?: string;
   audioCodec?: string;
@@ -54,10 +52,8 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
         filesize: format.filesize || format.filesize_approx || 0,
         filesize_approx: format.filesize_approx || 0,
         
-        // Additional properties to match Format interface
-        id: format.format_id,
+        // Additional properties
         quality: format.format_note || `${format.resolution}`,
-        extension: format.ext || 'mp4',
         size: formatFileSize(format.filesize || format.filesize_approx || 0),
         videoCodec: format.vcodec || 'unknown',
         audioCodec: format.acodec || 'unknown',

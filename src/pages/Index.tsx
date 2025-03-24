@@ -115,7 +115,7 @@ const Index = () => {
         onUrlChange={handleUrlChange}
         onSearch={handleSearch}
         isLoading={isLoading}
-        onMetadataReceived={(metadata) => setVideoInfo(metadata)}
+        onMetadataReceived={setVideoInfo}
         onLoading={setIsLoading}
       />
       

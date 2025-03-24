@@ -1,11 +1,12 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Search } from 'lucide-react';
-import { videoService } from '../services/videoService';
+import { videoService, VideoInfo } from '../services/videoService';
 
 export interface VideoFormProps {
-  onMetadataReceived: (metadata: any) => void;
+  onMetadataReceived: (metadata: VideoInfo) => void;
   onLoading: (isLoading: boolean) => void;
   onUrlChange?: (url: string) => void;
   onSearch?: (url: string) => Promise<void>;

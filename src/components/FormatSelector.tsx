@@ -8,30 +8,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-interface Format {
-  id: string;
-  quality: string;
-  resolution: string;
-  extension: string;
-  size: string;
-  videoCodec?: string;
-  audioCodec?: string;
-  bitrate?: string;
-  fps?: string;
-}
+import { VideoFormat } from '@/services/videoService';
 
 interface FormatSelectorProps {
-  formats: Format[];
-  onFormatSelected: (format: Format) => void;
+  formats: VideoFormat[];
+  selectedFormat: VideoFormat | null;
+  onFormatSelect: (format: VideoFormat) => void;
 }
 
-const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, onFormatSelected }) => {
-  const [selectedFormat, setSelectedFormat] = useState<string | null>(null);
-
-  const handleFormatSelect = (format: Format) => {
-    setSelectedFormat(format.id);
-    onFormatSelected(format);
+const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, selectedFormat, onFormatSelect }) => {
+  const handleFormatSelect = (format: VideoFormat) => {
+    onFormatSelect(format);
   };
 
   // Transition variants for container
@@ -66,9 +53,9 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, onFormatSelect
       >
         {formats.map((format) => (
           <motion.div
-            key={format.id}
+            key={format.format_id}
             className={`glass-panel p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-              selectedFormat === format.id 
+              selectedFormat?.format_id === format.format_id 
                 ? 'ring-2 ring-primary border-primary/40' 
                 : 'hover:shadow-md hover:-translate-y-1'
             }`}
@@ -80,8 +67,8 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, onFormatSelect
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center">
-                  <span className="font-medium">{format.quality}</span>
-                  {(format.videoCodec || format.bitrate) && (
+                  <span className="font-medium">{format.quality || format.format_note}</span>
+                  {(format.vcodec || format.bitrate) && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -91,8 +78,8 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, onFormatSelect
                         </TooltipTrigger>
                         <TooltipContent className="p-2">
                           <div className="space-y-1 text-xs">
-                            {format.videoCodec && <p>Video: {format.videoCodec}</p>}
-                            {format.audioCodec && <p>Audio: {format.audioCodec}</p>}
+                            {format.vcodec && <p>Video: {format.vcodec}</p>}
+                            {format.acodec && <p>Audio: {format.acodec}</p>}
                             {format.bitrate && <p>Bitrate: {format.bitrate}</p>}
                             {format.fps && <p>FPS: {format.fps}</p>}
                           </div>
@@ -103,12 +90,12 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, onFormatSelect
                 </div>
                 <div className="text-sm text-muted-foreground">{format.resolution}</div>
                 <div className="mt-2 flex items-center space-x-2">
-                  <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{format.extension}</span>
+                  <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{format.ext}</span>
                   <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{format.size}</span>
                 </div>
               </div>
               
-              {selectedFormat === format.id && (
+              {selectedFormat?.format_id === format.format_id && (
                 <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
                   <Check size={12} className="text-white" />
                 </div>
