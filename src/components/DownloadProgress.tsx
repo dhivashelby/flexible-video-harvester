@@ -1,32 +1,58 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Download, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DownloadProgressProps {
   isDownloading: boolean;
   progress: number;
   downloadStatus: string;
   onComplete?: () => void;
+  selectedFormat?: any;
+  videoTitle?: string;
 }
 
 const DownloadProgress: React.FC<DownloadProgressProps> = ({ 
   isDownloading, 
   progress, 
   downloadStatus,
-  onComplete 
+  onComplete,
+  selectedFormat,
+  videoTitle
 }) => {
+  const [outputPath, setOutputPath] = useState<string>('');
+  
   useEffect(() => {
     if (progress === 100 && onComplete) {
       const timer = setTimeout(() => {
+        // Generate a mock file path with video title and format
+        const sanitizedTitle = videoTitle ? 
+          videoTitle.replace(/[^\w\s]/gi, '_').substring(0, 30) : 
+          'video';
+        
+        const resolution = selectedFormat?.resolution || '720p';
+        setOutputPath(`/downloads/${sanitizedTitle}_${resolution}.mkv`);
+        
         onComplete();
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [progress, onComplete]);
+  }, [progress, onComplete, selectedFormat, videoTitle]);
 
   if (!isDownloading) return null;
+
+  const handleSaveInfoClick = () => {
+    // In a real app, this would be a real download link
+    // For now, let's provide feedback via toast
+    toast.info("This is a frontend demo", {
+      description: "In a complete implementation, this would download the actual video file.",
+      duration: 5000,
+    });
+  };
 
   return (
     <motion.div
@@ -58,6 +84,35 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
             </div>
           )}
         </div>
+
+        {progress === 100 && (
+          <div className="mt-6 border-t pt-4">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-muted-foreground mb-2">
+                <span className="font-medium text-foreground">Note:</span> This is a frontend demo. In a complete implementation, the file would be available at:
+              </p>
+              <div className="flex items-center gap-2 bg-secondary/30 p-2 rounded text-sm overflow-x-auto">
+                <code className="text-xs">{outputPath}</code>
+              </div>
+              
+              <div className="mt-3 flex gap-2 justify-center">
+                <Button size="sm" variant="outline" onClick={handleSaveInfoClick}>
+                  <Download size={16} className="mr-1" />
+                  Simulate Download
+                </Button>
+                
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  onClick={() => window.open("https://github.com/yt-dlp/yt-dlp", "_blank")}
+                >
+                  <ExternalLink size={16} className="mr-1" />
+                  Learn about yt-dlp
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

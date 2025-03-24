@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -10,20 +9,6 @@ import DownloadProgress from '../components/DownloadProgress';
 import Footer from '../components/Footer';
 import { videoService } from '../services/videoService';
 
-// Generate descriptive phrases for download states
-const downloadStatusMessages = [
-  "Extracting video metadata...",
-  "Fetching stream information...",
-  "Preparing download streams...",
-  "Downloading video content...",
-  "Downloading audio content...",
-  "Fetching subtitles...",
-  "Merging video and audio...",
-  "Embedding subtitles...",
-  "Finishing up MKV conversion...",
-  "Download complete! Saving file..."
-];
-
 const Index: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [videoMetadata, setVideoMetadata] = useState<any>(null);
@@ -34,17 +19,14 @@ const Index: React.FC = () => {
   const [downloadStatus, setDownloadStatus] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Handle metadata received from video form
   const handleMetadataReceived = (metadata: any) => {
     setVideoMetadata(metadata);
     
-    // Auto-select all videos for playlists
     if (metadata.type === 'playlist' && metadata.videos) {
       setSelectedVideos(metadata.videos.map((v: any) => v.id));
     }
   };
 
-  // Handle download process
   const handleDownload = async () => {
     if (!selectedFormat) {
       toast.error('Please select a format');
@@ -58,9 +40,8 @@ const Index: React.FC = () => {
     
     setIsDownloading(true);
     setDownloadProgress(0);
-    setDownloadStatus(downloadStatusMessages[0]);
+    setDownloadStatus(videoService.getDownloadStatusMessage(0));
     
-    // Simulate download progress
     const interval = setInterval(() => {
       setDownloadProgress(prev => {
         if (prev >= 100) {
@@ -68,26 +49,20 @@ const Index: React.FC = () => {
           return 100;
         }
         
-        // Update status message based on progress
-        const messageIndex = Math.min(
-          Math.floor(prev / 11), 
-          downloadStatusMessages.length - 1
-        );
-        setDownloadStatus(downloadStatusMessages[messageIndex]);
+        const newProgress = prev + 1;
+        setDownloadStatus(videoService.getDownloadStatusMessage(newProgress));
         
-        return prev + 1;
+        return newProgress;
       });
     }, 120);
     
     try {
-      // This would be an actual API call in a production app
       await videoService.downloadVideo(
         selectedFormat.id, 
         videoMetadata.type === 'playlist' ? selectedVideos : ['singleVideo']
       );
       
-      // Once download completes
-      setDownloadStatus(downloadStatusMessages[downloadStatusMessages.length - 1]);
+      setDownloadStatus(videoService.getDownloadStatusMessage(100));
       setTimeout(() => {
         setShowConfirmation(true);
       }, 1000);
@@ -99,7 +74,6 @@ const Index: React.FC = () => {
     }
   };
 
-  // Reset the app state
   const resetApp = () => {
     setVideoMetadata(null);
     setSelectedFormat(null);
@@ -189,13 +163,11 @@ const Index: React.FC = () => {
                   </div>
                 </motion.div>
                 
-                {/* Format selector */}
                 <FormatSelector 
                   formats={videoMetadata.formats} 
                   onFormatSelected={setSelectedFormat} 
                 />
                 
-                {/* Playlist selector (only show for playlists) */}
                 {videoMetadata.type === 'playlist' && (
                   <PlaylistSelector 
                     videos={videoMetadata.videos}
@@ -203,7 +175,6 @@ const Index: React.FC = () => {
                   />
                 )}
                 
-                {/* Download button */}
                 <motion.div
                   className="mt-8 flex gap-4"
                   initial={{ opacity: 0, y: 20 }}
@@ -247,6 +218,8 @@ const Index: React.FC = () => {
                       isDownloading={isDownloading}
                       progress={downloadProgress}
                       downloadStatus={downloadStatus}
+                      selectedFormat={selectedFormat}
+                      videoTitle={videoMetadata?.title}
                     />
                   ) : (
                     <motion.div
@@ -268,8 +241,12 @@ const Index: React.FC = () => {
                       </div>
                       
                       <h3 className="text-xl font-medium mb-2">Download Complete!</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Your video has been successfully downloaded and converted.
+                      <p className="text-muted-foreground mb-2">
+                        Your video has been successfully processed.
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 mb-4">
+                        Note: This is a frontend demo. In a complete implementation, 
+                        the video would be available for download.
                       </p>
                       
                       <motion.button 

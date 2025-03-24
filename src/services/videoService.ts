@@ -111,6 +111,20 @@ const mockPlaylistVideos = [
   },
 ];
 
+// Download status messages to make the process more transparent
+const downloadSteps = [
+  "Extracting video metadata using yt-dlp...",
+  "Fetching video stream information...",
+  "Preparing video and audio streams...",
+  "Downloading video content...",
+  "Downloading audio content...",
+  "Fetching subtitles in SRT format...",
+  "Merging video and audio streams with FFmpeg...",
+  "Embedding subtitles into the MKV container...",
+  "Optimizing MKV container...",
+  "Download complete! This is a frontend demo - no actual file is saved."
+];
+
 // This is a simplification for demo purposes
 // In a real app, this would call actual backend APIs
 export const videoService = {
@@ -163,13 +177,13 @@ export const videoService = {
   
   // Download video (mock)
   downloadVideo: async (formatId: string, videoIds: string[]): Promise<any> => {
-    // In a real app, this would trigger backend processing
-    // For demo, we'll simulate progress updates
+    // In a real app, this would trigger actual backend processing
+    // For frontend demo, we're simulating the download process
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
           success: true,
-          message: 'Download complete',
+          message: 'Download complete. In a real implementation, the video would be saved locally.',
           outputPath: '/downloads/video.mkv',
         });
       }, 5000);
@@ -180,5 +194,11 @@ export const videoService = {
   getDownloadProgress: async (): Promise<number> => {
     // In a real app, this would get actual progress from backend
     return Promise.resolve(Math.floor(Math.random() * 100));
+  },
+  
+  // Get current download status message
+  getDownloadStatusMessage: (progress: number): string => {
+    const stepIndex = Math.min(Math.floor(progress / 10), downloadSteps.length - 1);
+    return downloadSteps[stepIndex];
   }
 };
