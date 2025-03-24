@@ -1,20 +1,21 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import VideoForm from '@/components/VideoForm';
 import FormatSelector from '@/components/FormatSelector';
 import Footer from '@/components/Footer';
-import { VideoInfo, VideoFormat } from '@/services/videoService';
+import { VideoInfo, VideoFormat, fetchVideoInfo, downloadVideo } from '@/services/videoService';
 import { Button } from "@/components/ui/button";
 import { Download } from 'lucide-react';
 import DownloadProgress from '@/components/DownloadProgress';
 import { toast } from 'sonner';
-import { downloadVideo } from '@/services/videoService';
 
 const Index = () => {
   const [searchUrl, setSearchUrl] = useState<string>('');
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<VideoFormat | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [downloadStatus, setDownloadStatus] = useState<string>('');
   const [outputPath, setOutputPath] = useState<string>('');
@@ -25,14 +26,18 @@ const Index = () => {
   };
   
   const handleSearch = async (url: string) => {
+    setIsLoading(true);
     try {
       const videoData = await fetchVideoInfo(url);
       setVideoInfo(videoData);
+      toast.success('Video information retrieved successfully');
     } catch (error: any) {
       toast.error('Failed to load video info.', {
         description: error.message || 'Please check the URL and try again.',
       });
       setVideoInfo(null);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -109,7 +114,9 @@ const Index = () => {
       <VideoForm 
         onUrlChange={handleUrlChange}
         onSearch={handleSearch}
-        isLoading={!videoInfo && searchUrl !== ''}
+        isLoading={isLoading}
+        onMetadataReceived={(metadata) => setVideoInfo(metadata)}
+        onLoading={setIsLoading}
       />
       
       {videoInfo && (

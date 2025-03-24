@@ -1,16 +1,24 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Search } from 'lucide-react';
 import { videoService } from '../services/videoService';
 
-interface VideoFormProps {
+export interface VideoFormProps {
   onMetadataReceived: (metadata: any) => void;
   onLoading: (isLoading: boolean) => void;
+  onUrlChange?: (url: string) => void;
+  onSearch?: (url: string) => Promise<void>;
+  isLoading?: boolean;
 }
 
-const VideoForm: React.FC<VideoFormProps> = ({ onMetadataReceived, onLoading }) => {
+const VideoForm: React.FC<VideoFormProps> = ({ 
+  onMetadataReceived, 
+  onLoading,
+  onUrlChange,
+  onSearch,
+  isLoading: externalIsLoading
+}) => {
   const [url, setUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,11 +30,19 @@ const VideoForm: React.FC<VideoFormProps> = ({ onMetadataReceived, onLoading }) 
       return;
     }
     
+    if (onUrlChange) {
+      onUrlChange(url);
+    }
+    
+    if (onSearch) {
+      await onSearch(url);
+      return;
+    }
+    
     setIsSubmitting(true);
     onLoading(true);
     
     try {
-      // This would be an actual API call in a production app
       const metadata = await videoService.getVideoMetadata(url);
       onMetadataReceived(metadata);
       toast.success('Video information retrieved successfully');
@@ -38,6 +54,8 @@ const VideoForm: React.FC<VideoFormProps> = ({ onMetadataReceived, onLoading }) 
       onLoading(false);
     }
   };
+
+  const isLoadingState = externalIsLoading !== undefined ? externalIsLoading : isSubmitting;
 
   return (
     <motion.div
@@ -54,21 +72,26 @@ const VideoForm: React.FC<VideoFormProps> = ({ onMetadataReceived, onLoading }) 
           <input
             type="text"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              if (onUrlChange) {
+                onUrlChange(e.target.value);
+              }
+            }}
             placeholder="Paste YouTube URL or playlist link"
             className="glass-input w-full pl-10 pr-4 py-3 rounded-full"
-            disabled={isSubmitting}
+            disabled={isLoadingState}
           />
         </div>
         
         <motion.button
           type="submit"
           className="btn-primary mx-auto"
-          disabled={isSubmitting || !url.trim()}
+          disabled={isLoadingState || !url.trim()}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
         >
-          {isSubmitting ? (
+          {isLoadingState ? (
             <span className="flex items-center">
               <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

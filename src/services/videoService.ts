@@ -13,6 +13,15 @@ export interface VideoFormat {
   acodec: string;
   filesize: number;
   filesize_approx?: number;
+  
+  // Adding properties needed by FormatSelector
+  id: string;
+  quality: string;
+  extension: string;
+  size: string;
+  videoCodec?: string;
+  audioCodec?: string;
+  bitrate?: string;
 }
 
 export interface VideoInfo {
@@ -24,15 +33,17 @@ export interface VideoInfo {
   formats: VideoFormat[];
 }
 
+// Fetch video info from the backend
 export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
   try {
     const response = await axios.post(`${API_URL}/video-info`, { url });
     const { videoInfo } = response.data;
     
-    // Process formats to add better descriptions
+    // Process formats to add better descriptions and match the Format interface
     const formats = videoInfo.formats
       .filter((format: any) => format.resolution !== 'audio only' && format.vcodec !== 'none')
       .map((format: any) => ({
+        // Original properties
         format_id: format.format_id,
         format_note: format.format_note || 'unknown',
         ext: format.ext || 'mp4',
@@ -41,7 +52,16 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
         vcodec: format.vcodec || 'unknown',
         acodec: format.acodec || 'unknown',
         filesize: format.filesize || format.filesize_approx || 0,
-        filesize_approx: format.filesize_approx || 0
+        filesize_approx: format.filesize_approx || 0,
+        
+        // Additional properties to match Format interface
+        id: format.format_id,
+        quality: format.format_note || `${format.resolution}`,
+        extension: format.ext || 'mp4',
+        size: formatFileSize(format.filesize || format.filesize_approx || 0),
+        videoCodec: format.vcodec || 'unknown',
+        audioCodec: format.acodec || 'unknown',
+        bitrate: format.tbr ? `${format.tbr} Kbps` : 'unknown',
       }));
     
     return {
@@ -75,7 +95,18 @@ export const downloadVideo = (url: string, formatId: string, videoTitle: string)
   };
 };
 
-// Mock function for getting download status - to be removed when backend is implemented
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Mock function for getting download status
 export const getDownloadStatus = (progress: number): string => {
   if (progress === 0) return 'Initializing download...';
   if (progress < 20) return 'Extracting video information...';
@@ -84,4 +115,11 @@ export const getDownloadStatus = (progress: number): string => {
   if (progress < 80) return 'Downloading audio stream...';
   if (progress < 95) return 'Merging audio and video...';
   return 'Finalizing download...';
+};
+
+// Create a videoService object for compatibility with VideoForm
+export const videoService = {
+  getVideoMetadata: async (url: string): Promise<VideoInfo> => {
+    return fetchVideoInfo(url);
+  }
 };
