@@ -1,204 +1,87 @@
-// Mock video service for frontend demo
-// In a real application, this would connect to the backend API
 
-// Mock video formats with more detailed information
-const mockFormats = [
-  { 
-    id: '137+140', 
-    quality: 'HD', 
-    resolution: '1080p', 
-    extension: 'MP4', 
-    size: '150-300 MB',
-    videoCodec: 'H.264',
-    audioCodec: 'AAC',
-    bitrate: '10 Mbps',
-    fps: '30'
-  },
-  { 
-    id: '136+140', 
-    quality: 'HD', 
-    resolution: '720p', 
-    extension: 'MP4', 
-    size: '80-150 MB',
-    videoCodec: 'H.264',
-    audioCodec: 'AAC',
-    bitrate: '5 Mbps',
-    fps: '30'
-  },
-  { 
-    id: '135+140', 
-    quality: 'SD', 
-    resolution: '480p', 
-    extension: 'MP4', 
-    size: '40-80 MB',
-    videoCodec: 'H.264',
-    audioCodec: 'AAC',
-    bitrate: '2.5 Mbps',
-    fps: '30'
-  },
-  { 
-    id: '134+140', 
-    quality: 'SD', 
-    resolution: '360p', 
-    extension: 'MP4', 
-    size: '20-40 MB',
-    videoCodec: 'H.264',
-    audioCodec: 'AAC',
-    bitrate: '1.5 Mbps',
-    fps: '30'
-  },
-  { 
-    id: '133+140', 
-    quality: 'Low', 
-    resolution: '240p', 
-    extension: 'MP4', 
-    size: '10-20 MB',
-    videoCodec: 'H.264',
-    audioCodec: 'AAC',
-    bitrate: '0.7 Mbps',
-    fps: '30'
-  },
-  { 
-    id: '160+140', 
-    quality: 'Lowest', 
-    resolution: '144p', 
-    extension: 'MP4', 
-    size: '5-10 MB',
-    videoCodec: 'H.264',
-    audioCodec: 'AAC',
-    bitrate: '0.3 Mbps',
-    fps: '30'
-  },
-];
+import axios from 'axios';
 
-// Mock playlist videos
-const mockPlaylistVideos = [
-  {
-    id: 'video1',
-    title: 'Introduction to Web Development',
-    thumbnail: 'https://picsum.photos/seed/video1/320/180',
-    duration: '12:34'
-  },
-  {
-    id: 'video2',
-    title: 'HTML Basics - Structure and Semantics',
-    thumbnail: 'https://picsum.photos/seed/video2/320/180',
-    duration: '8:25'
-  },
-  {
-    id: 'video3',
-    title: 'CSS Fundamentals - Styling Your First Page',
-    thumbnail: 'https://picsum.photos/seed/video3/320/180',
-    duration: '15:41'
-  },
-  {
-    id: 'video4',
-    title: 'JavaScript Essentials for Beginners',
-    thumbnail: 'https://picsum.photos/seed/video4/320/180',
-    duration: '22:15'
-  },
-  {
-    id: 'video5',
-    title: 'Responsive Design Principles',
-    thumbnail: 'https://picsum.photos/seed/video5/320/180',
-    duration: '18:07'
-  },
-  {
-    id: 'video6',
-    title: 'Building Your First Interactive Website',
-    thumbnail: 'https://picsum.photos/seed/video6/320/180',
-    duration: '28:30'
-  },
-];
+const API_URL = 'http://localhost:3001/api';
 
-// Download status messages to make the process more transparent
-const downloadSteps = [
-  "Extracting video metadata using yt-dlp...",
-  "Fetching video stream information...",
-  "Preparing video and audio streams...",
-  "Downloading video content...",
-  "Downloading audio content...",
-  "Fetching subtitles in SRT format...",
-  "Merging video and audio streams with FFmpeg...",
-  "Embedding subtitles into the MKV container...",
-  "Optimizing MKV container...",
-  "Download complete! This is a frontend demo - no actual file is saved."
-];
+export interface VideoFormat {
+  format_id: string;
+  format_note: string;
+  ext: string;
+  resolution: string;
+  fps: number;
+  vcodec: string;
+  acodec: string;
+  filesize: number;
+  filesize_approx?: number;
+}
 
-// This is a simplification for demo purposes
-// In a real app, this would call actual backend APIs
-export const videoService = {
-  // Get video metadata (mock)
-  getVideoMetadata: async (url: string): Promise<any> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+export interface VideoInfo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  duration: number;
+  formats: VideoFormat[];
+}
+
+export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
+  try {
+    const response = await axios.post(`${API_URL}/video-info`, { url });
+    const { videoInfo } = response.data;
     
-    // Check if it's a playlist URL (simplified check)
-    const isPlaylist = url.includes('playlist') || url.includes('list=');
+    // Process formats to add better descriptions
+    const formats = videoInfo.formats
+      .filter((format: any) => format.resolution !== 'audio only' && format.vcodec !== 'none')
+      .map((format: any) => ({
+        format_id: format.format_id,
+        format_note: format.format_note || 'unknown',
+        ext: format.ext || 'mp4',
+        resolution: format.resolution || 'unknown',
+        fps: format.fps || 30,
+        vcodec: format.vcodec || 'unknown',
+        acodec: format.acodec || 'unknown',
+        filesize: format.filesize || format.filesize_approx || 0,
+        filesize_approx: format.filesize_approx || 0
+      }));
     
-    if (isPlaylist) {
-      return {
-        type: 'playlist',
-        title: 'Web Development Fundamentals',
-        channelName: 'Code Academy',
-        videos: mockPlaylistVideos,
-        formats: mockFormats,
-        videoCount: mockPlaylistVideos.length,
-        totalDuration: '1:45:22',
-        fetchDate: new Date().toISOString(),
-      };
-    } else {
-      // Check for YouTube URL pattern
-      const isYouTube = url.includes('youtube.com/') || url.includes('youtu.be/');
-      
-      // Extract video ID (simplified)
-      let videoId = '';
-      if (url.includes('v=')) {
-        videoId = url.split('v=')[1].split('&')[0];
-      } else if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1].split('?')[0];
-      }
-      
-      // Use videoId as part of the mock response
-      return {
-        type: 'video',
-        videoId: videoId || 'dQw4w9WgXcQ', // Default to a known video ID if extraction fails
-        title: isYouTube ? `YouTube Video: ${videoId || 'Unknown ID'}` : 'Learn Web Development in 2023',
-        channelName: 'Code Academy',
-        thumbnail: isYouTube ? `https://i.ytimg.com/vi/${videoId || 'dQw4w9WgXcQ'}/maxresdefault.jpg` : 'https://picsum.photos/seed/thumbnail/640/360',
-        duration: '15:25',
-        formats: mockFormats,
-        views: '1.2M',
-        publishedDate: '2023-01-15',
-        fetchDate: new Date().toISOString(),
-      };
-    }
-  },
-  
-  // Download video (mock)
-  downloadVideo: async (formatId: string, videoIds: string[]): Promise<any> => {
-    // In a real app, this would trigger actual backend processing
-    // For frontend demo, we're simulating the download process
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          message: 'Download complete. In a real implementation, the video would be saved locally.',
-          outputPath: '/downloads/video.mkv',
-        });
-      }, 5000);
-    });
-  },
-  
-  // Get download progress (mock)
-  getDownloadProgress: async (): Promise<number> => {
-    // In a real app, this would get actual progress from backend
-    return Promise.resolve(Math.floor(Math.random() * 100));
-  },
-  
-  // Get current download status message
-  getDownloadStatusMessage: (progress: number): string => {
-    const stepIndex = Math.min(Math.floor(progress / 10), downloadSteps.length - 1);
-    return downloadSteps[stepIndex];
+    return {
+      id: videoInfo.id,
+      title: videoInfo.title,
+      description: videoInfo.description,
+      thumbnail: videoInfo.thumbnail,
+      duration: videoInfo.duration,
+      formats: formats
+    };
+  } catch (error) {
+    console.error('Error fetching video info:', error);
+    throw new Error('Failed to fetch video information');
   }
+};
+
+// Function to download a video with progress updates
+export const downloadVideo = (url: string, formatId: string, videoTitle: string) => {
+  const eventSource = new EventSource(`${API_URL}/download?url=${encodeURIComponent(url)}&formatId=${formatId}&videoTitle=${encodeURIComponent(videoTitle)}`);
+  
+  return {
+    eventSource,
+    startDownload: async () => {
+      try {
+        await axios.post(`${API_URL}/download`, { url, formatId, videoTitle });
+      } catch (error) {
+        console.error('Error starting download:', error);
+        throw new Error('Failed to start download');
+      }
+    }
+  };
+};
+
+// Mock function for getting download status - to be removed when backend is implemented
+export const getDownloadStatus = (progress: number): string => {
+  if (progress === 0) return 'Initializing download...';
+  if (progress < 20) return 'Extracting video information...';
+  if (progress < 40) return 'Connecting to media servers...';
+  if (progress < 60) return 'Downloading video stream...';
+  if (progress < 80) return 'Downloading audio stream...';
+  if (progress < 95) return 'Merging audio and video...';
+  return 'Finalizing download...';
 };

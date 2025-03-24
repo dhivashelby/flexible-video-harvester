@@ -13,6 +13,7 @@ interface DownloadProgressProps {
   onComplete?: () => void;
   selectedFormat?: any;
   videoTitle?: string;
+  outputPath?: string;
 }
 
 const DownloadProgress: React.FC<DownloadProgressProps> = ({ 
@@ -21,37 +22,32 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
   downloadStatus,
   onComplete,
   selectedFormat,
-  videoTitle
+  videoTitle,
+  outputPath
 }) => {
-  const [outputPath, setOutputPath] = useState<string>('');
   
   useEffect(() => {
     if (progress === 100 && onComplete) {
       const timer = setTimeout(() => {
-        // Generate a mock file path with video title and format
-        const sanitizedTitle = videoTitle ? 
-          videoTitle.replace(/[^\w\s]/gi, '_').substring(0, 30) : 
-          'video';
-        
-        const resolution = selectedFormat?.resolution || '720p';
-        setOutputPath(`/downloads/${sanitizedTitle}_${resolution}.mkv`);
-        
         onComplete();
       }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [progress, onComplete, selectedFormat, videoTitle]);
+  }, [progress, onComplete]);
 
   if (!isDownloading) return null;
 
-  const handleSaveInfoClick = () => {
-    // In a real app, this would be a real download link
-    // For now, let's provide feedback via toast
-    toast.info("This is a frontend demo", {
-      description: "In a complete implementation, this would download the actual video file.",
-      duration: 5000,
-    });
+  const handleDownloadClick = () => {
+    if (outputPath) {
+      // In a real app with backend, this would download the actual file
+      window.open(outputPath, '_blank');
+    } else {
+      toast.info("Download not completed yet", {
+        description: "Please wait for the download to complete.",
+        duration: 3000,
+      });
+    }
   };
 
   return (
@@ -70,7 +66,7 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
         </div>
         
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>{progress}% complete</span>
+          <span>{Math.round(progress)}% complete</span>
           <span>
             {progress < 100 ? 'Processing...' : 'Complete!'}
           </span>
@@ -88,28 +84,36 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
         {progress === 100 && (
           <div className="mt-6 border-t pt-4">
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted-foreground mb-2">
-                <span className="font-medium text-foreground">Note:</span> This is a frontend demo. In a complete implementation, the file would be available at:
-              </p>
-              <div className="flex items-center gap-2 bg-secondary/30 p-2 rounded text-sm overflow-x-auto">
-                <code className="text-xs">{outputPath}</code>
-              </div>
-              
-              <div className="mt-3 flex gap-2 justify-center">
-                <Button size="sm" variant="outline" onClick={handleSaveInfoClick}>
-                  <Download size={16} className="mr-1" />
-                  Simulate Download
-                </Button>
-                
-                <Button 
-                  size="sm" 
-                  variant="secondary"
-                  onClick={() => window.open("https://github.com/yt-dlp/yt-dlp", "_blank")}
-                >
-                  <ExternalLink size={16} className="mr-1" />
-                  Learn about yt-dlp
-                </Button>
-              </div>
+              {outputPath ? (
+                <>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Your download is complete! You can now access your file:
+                  </p>
+                  <div className="flex items-center gap-2 bg-secondary/30 p-2 rounded text-sm overflow-x-auto">
+                    <code className="text-xs">{outputPath}</code>
+                  </div>
+                  
+                  <div className="mt-3 flex gap-2 justify-center">
+                    <Button size="sm" onClick={handleDownloadClick}>
+                      <Download size={16} className="mr-1" />
+                      Download File
+                    </Button>
+                    
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      onClick={() => window.open("https://github.com/yt-dlp/yt-dlp", "_blank")}
+                    >
+                      <ExternalLink size={16} className="mr-1" />
+                      Learn about yt-dlp
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Download is complete! Make sure the backend server is running to access your file.
+                </p>
+              )}
             </div>
           </div>
         )}
