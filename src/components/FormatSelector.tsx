@@ -1,7 +1,13 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Format {
   id: string;
@@ -9,6 +15,10 @@ interface Format {
   resolution: string;
   extension: string;
   size: string;
+  videoCodec?: string;
+  audioCodec?: string;
+  bitrate?: string;
+  fps?: string;
 }
 
 interface FormatSelectorProps {
@@ -69,7 +79,28 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, onFormatSelect
           >
             <div className="flex justify-between items-start">
               <div>
-                <div className="font-medium">{format.quality}</div>
+                <div className="flex items-center">
+                  <span className="font-medium">{format.quality}</span>
+                  {(format.videoCodec || format.bitrate) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="ml-1.5 rounded-full bg-secondary/40 flex items-center justify-center h-4 w-4">
+                            <Info size={12} className="text-muted-foreground" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="p-2">
+                          <div className="space-y-1 text-xs">
+                            {format.videoCodec && <p>Video: {format.videoCodec}</p>}
+                            {format.audioCodec && <p>Audio: {format.audioCodec}</p>}
+                            {format.bitrate && <p>Bitrate: {format.bitrate}</p>}
+                            {format.fps && <p>FPS: {format.fps}</p>}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
                 <div className="text-sm text-muted-foreground">{format.resolution}</div>
                 <div className="mt-2 flex items-center space-x-2">
                   <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{format.extension}</span>

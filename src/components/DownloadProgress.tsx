@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Progress } from "@/components/ui/progress";
 
 interface DownloadProgressProps {
   isDownloading: boolean;
@@ -39,14 +40,7 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
         <h3 className="text-lg font-medium mb-4">Processing</h3>
         
         <div className="mb-2">
-          <div className="progress-bar">
-            <motion.div 
-              className="progress-bar-fill"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.2 }}
-            />
-          </div>
+          <Progress value={progress} className="h-2" />
         </div>
         
         <div className="flex justify-between text-sm text-muted-foreground">
@@ -58,6 +52,11 @@ const DownloadProgress: React.FC<DownloadProgressProps> = ({
         
         <div className="mt-4 text-sm">
           <p className="text-muted-foreground">{downloadStatus}</p>
+          {progress > 0 && progress < 100 && (
+            <div className="mt-1 text-xs text-muted-foreground/70">
+              Estimated time remaining: {Math.ceil((100 - progress) / 10)} minutes
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

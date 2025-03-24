@@ -1,50 +1,73 @@
-
 // Mock video service for frontend demo
 // In a real application, this would connect to the backend API
 
-// Mock video formats
+// Mock video formats with more detailed information
 const mockFormats = [
   { 
     id: '137+140', 
     quality: 'HD', 
     resolution: '1080p', 
     extension: 'MP4', 
-    size: '150-300 MB' 
+    size: '150-300 MB',
+    videoCodec: 'H.264',
+    audioCodec: 'AAC',
+    bitrate: '10 Mbps',
+    fps: '30'
   },
   { 
     id: '136+140', 
     quality: 'HD', 
     resolution: '720p', 
     extension: 'MP4', 
-    size: '80-150 MB' 
+    size: '80-150 MB',
+    videoCodec: 'H.264',
+    audioCodec: 'AAC',
+    bitrate: '5 Mbps',
+    fps: '30'
   },
   { 
     id: '135+140', 
     quality: 'SD', 
     resolution: '480p', 
     extension: 'MP4', 
-    size: '40-80 MB' 
+    size: '40-80 MB',
+    videoCodec: 'H.264',
+    audioCodec: 'AAC',
+    bitrate: '2.5 Mbps',
+    fps: '30'
   },
   { 
     id: '134+140', 
     quality: 'SD', 
     resolution: '360p', 
     extension: 'MP4', 
-    size: '20-40 MB' 
+    size: '20-40 MB',
+    videoCodec: 'H.264',
+    audioCodec: 'AAC',
+    bitrate: '1.5 Mbps',
+    fps: '30'
   },
   { 
     id: '133+140', 
     quality: 'Low', 
     resolution: '240p', 
     extension: 'MP4', 
-    size: '10-20 MB' 
+    size: '10-20 MB',
+    videoCodec: 'H.264',
+    audioCodec: 'AAC',
+    bitrate: '0.7 Mbps',
+    fps: '30'
   },
   { 
     id: '160+140', 
     quality: 'Lowest', 
     resolution: '144p', 
     extension: 'MP4', 
-    size: '5-10 MB' 
+    size: '5-10 MB',
+    videoCodec: 'H.264',
+    audioCodec: 'AAC',
+    bitrate: '0.3 Mbps',
+    fps: '30'
   },
 ];
 
@@ -106,15 +129,34 @@ export const videoService = {
         channelName: 'Code Academy',
         videos: mockPlaylistVideos,
         formats: mockFormats,
+        videoCount: mockPlaylistVideos.length,
+        totalDuration: '1:45:22',
+        fetchDate: new Date().toISOString(),
       };
     } else {
+      // Check for YouTube URL pattern
+      const isYouTube = url.includes('youtube.com/') || url.includes('youtu.be/');
+      
+      // Extract video ID (simplified)
+      let videoId = '';
+      if (url.includes('v=')) {
+        videoId = url.split('v=')[1].split('&')[0];
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+      }
+      
+      // Use videoId as part of the mock response
       return {
         type: 'video',
-        title: 'Learn Web Development in 2023',
+        videoId: videoId || 'dQw4w9WgXcQ', // Default to a known video ID if extraction fails
+        title: isYouTube ? `YouTube Video: ${videoId || 'Unknown ID'}` : 'Learn Web Development in 2023',
         channelName: 'Code Academy',
-        thumbnail: 'https://picsum.photos/seed/thumbnail/640/360',
+        thumbnail: isYouTube ? `https://i.ytimg.com/vi/${videoId || 'dQw4w9WgXcQ'}/maxresdefault.jpg` : 'https://picsum.photos/seed/thumbnail/640/360',
         duration: '15:25',
         formats: mockFormats,
+        views: '1.2M',
+        publishedDate: '2023-01-15',
+        fetchDate: new Date().toISOString(),
       };
     }
   },
