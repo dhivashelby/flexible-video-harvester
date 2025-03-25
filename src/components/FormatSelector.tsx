@@ -24,17 +24,19 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, selectedFormat
   
   // Sort formats by quality (resolution for video, bitrate for audio)
   const sortedVideoFormats = [...videoFormats].sort((a, b) => {
-    const resA = parseInt(a.resolution?.split('x')[1] || '0');
-    const resB = parseInt(b.resolution?.split('x')[1] || '0');
+    const resA = parseInt(String(a.resolution?.split('x')[1] || '0'));
+    const resB = parseInt(String(b.resolution?.split('x')[1] || '0'));
     return resB - resA;
   });
   
-  const sortedAudioFormats = [...audioFormats].sort((a, b) => 
-    (b.bitrate || 0) - (a.bitrate || 0)
-  );
+  const sortedAudioFormats = [...audioFormats].sort((a, b) => {
+    const bitrateA = typeof a.bitrate === 'string' ? parseFloat(a.bitrate) : 0;
+    const bitrateB = typeof b.bitrate === 'string' ? parseFloat(b.bitrate) : 0;
+    return bitrateB - bitrateA;
+  });
 
   const getFormatSize = (format: VideoFormat) => {
-    const filesize = format.filesize || format.size || 0;
+    const filesize = format.filesize || 0;
     if (filesize === 0) return 'Unknown';
     
     const sizeMB = filesize / (1024 * 1024);
@@ -102,7 +104,7 @@ const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, selectedFormat
           <table className="w-full">
             <tbody>
               {sortedVideoFormats.slice(0, 5).map((format) => {
-                const isHD = (format.height || 0) >= 720;
+                const isHD = parseInt(String(format.resolution?.split('x')[1] || '0')) >= 720;
                 const resolution = format.resolution?.split('x')[1] || format.format_note;
                 
                 return (

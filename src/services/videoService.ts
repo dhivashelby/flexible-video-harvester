@@ -1,7 +1,8 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+// Set the API URL - in development it's localhost, but in production it might be different
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export interface VideoFormat {
   format_id: string;
@@ -34,6 +35,7 @@ export interface VideoInfo {
 // Fetch video info from the backend
 export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
   try {
+    console.log(`Attempting to connect to API at: ${API_URL}/video-info`);
     const response = await axios.post(`${API_URL}/video-info`, { url });
     const { videoInfo } = response.data;
     
@@ -70,6 +72,9 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
     };
   } catch (error) {
     console.error('Error fetching video info:', error);
+    if (axios.isAxiosError(error) && !error.response) {
+      throw new Error('Cannot connect to the backend server. Make sure the server is running at ' + API_URL);
+    }
     throw new Error('Failed to fetch video information');
   }
 };
