@@ -108,52 +108,58 @@ const Index = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Header />
-      
-      <VideoForm 
-        onUrlChange={handleUrlChange}
-        onSearch={handleSearch}
-        isLoading={isLoading}
-        onMetadataReceived={setVideoInfo}
-        onLoading={setIsLoading}
-      />
-      
-      {videoInfo && (
-        <div className="mt-8">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold">{videoInfo.title}</h2>
-            <p className="text-gray-600">{videoInfo.description}</p>
-          </div>
-          
-          <FormatSelector 
-            formats={videoInfo.formats}
-            selectedFormat={selectedFormat}
-            onFormatSelect={setSelectedFormat}
+    <div className="flex flex-col min-h-screen">
+      <div className="container mx-auto px-4 py-6 flex-grow bg-white rounded-lg shadow-md my-4">
+        <Header />
+        
+        <div className="max-w-3xl mx-auto mt-6">
+          <VideoForm 
+            onUrlChange={handleUrlChange}
+            onSearch={handleSearch}
+            isLoading={isLoading}
+            onMetadataReceived={setVideoInfo}
+            onLoading={setIsLoading}
           />
-          
-          <div className="mt-6 flex justify-center">
-            <Button 
-              size="lg" 
-              onClick={handleDownload}
-              disabled={isDownloading || !selectedFormat}
-            >
-              <Download className="mr-2 h-5 w-5" />
-              Download Video
-            </Button>
-          </div>
         </div>
-      )}
-      
-      <DownloadProgress 
-        isDownloading={isDownloading}
-        progress={progress}
-        downloadStatus={downloadStatus}
-        onComplete={handleDownloadComplete}
-        selectedFormat={selectedFormat}
-        videoTitle={videoInfo?.title}
-        outputPath={outputPath}
-      />
+        
+        {videoInfo && (
+          <div className="max-w-4xl mx-auto mt-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-2/3">
+                <FormatSelector 
+                  formats={videoInfo.formats}
+                  selectedFormat={selectedFormat}
+                  onFormatSelect={setSelectedFormat}
+                />
+              </div>
+              
+              <div className="w-full md:w-1/3">
+                <div className="bg-white rounded-lg shadow p-4">
+                  <img 
+                    src={videoInfo.thumbnail || 'public/placeholder.svg'} 
+                    alt={videoInfo.title} 
+                    className="w-full h-auto rounded"
+                  />
+                  <h3 className="mt-3 font-medium text-lg line-clamp-2">{videoInfo.title}</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Duration: {videoInfo.duration || 'Unknown'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <DownloadProgress 
+          isDownloading={isDownloading}
+          progress={progress}
+          downloadStatus={downloadStatus}
+          onComplete={handleDownloadComplete}
+          selectedFormat={selectedFormat}
+          videoTitle={videoInfo?.title}
+          outputPath={outputPath}
+        />
+      </div>
       
       <Footer />
     </div>

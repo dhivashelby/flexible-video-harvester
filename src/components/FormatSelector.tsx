@@ -1,13 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Info } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Download, Volume2, Video } from 'lucide-react';
 import { VideoFormat } from '@/services/videoService';
 
 interface FormatSelectorProps {
@@ -17,93 +11,142 @@ interface FormatSelectorProps {
 }
 
 const FormatSelector: React.FC<FormatSelectorProps> = ({ formats, selectedFormat, onFormatSelect }) => {
-  const handleFormatSelect = (format: VideoFormat) => {
+  if (!formats || formats.length === 0) return null;
+  
+  // Group formats by type (audio/video)
+  const audioFormats = formats.filter(format => 
+    format.vcodec === 'none' || format.format_note.toLowerCase().includes('audio')
+  );
+  
+  const videoFormats = formats.filter(format => 
+    format.vcodec !== 'none' && !format.format_note.toLowerCase().includes('audio')
+  );
+  
+  // Sort formats by quality (resolution for video, bitrate for audio)
+  const sortedVideoFormats = [...videoFormats].sort((a, b) => {
+    const resA = parseInt(a.resolution?.split('x')[1] || '0');
+    const resB = parseInt(b.resolution?.split('x')[1] || '0');
+    return resB - resA;
+  });
+  
+  const sortedAudioFormats = [...audioFormats].sort((a, b) => 
+    (b.bitrate || 0) - (a.bitrate || 0)
+  );
+
+  const getFormatSize = (format: VideoFormat) => {
+    const filesize = format.filesize || format.size || 0;
+    if (filesize === 0) return 'Unknown';
+    
+    const sizeMB = filesize / (1024 * 1024);
+    return sizeMB.toFixed(2) + 'M';
+  };
+
+  const handleSelectFormat = (format: VideoFormat) => {
     onFormatSelect(format);
   };
-
-  // Transition variants for container
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  // Variants for each format item
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
-  };
-
+  
   return (
     <motion.div 
-      className="w-full max-w-3xl mt-8"
-      initial="hidden"
-      animate="show"
-      variants={containerVariants}
+      className="w-full max-w-3xl mt-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
     >
-      <h2 className="text-xl font-medium mb-4">Select Format & Quality</h2>
-      
-      <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
-        variants={containerVariants}
-      >
-        {formats.map((format) => (
-          <motion.div
-            key={format.format_id}
-            className={`glass-panel p-4 rounded-xl cursor-pointer transition-all duration-300 ${
-              selectedFormat?.format_id === format.format_id 
-                ? 'ring-2 ring-primary border-primary/40' 
-                : 'hover:shadow-md hover:-translate-y-1'
-            }`}
-            onClick={() => handleFormatSelect(format)}
-            variants={itemVariants}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="flex items-center">
-                  <span className="font-medium">{format.quality || format.format_note}</span>
-                  {(format.vcodec || format.bitrate) && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="ml-1.5 rounded-full bg-secondary/40 flex items-center justify-center h-4 w-4">
-                            <Info size={12} className="text-muted-foreground" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="p-2">
-                          <div className="space-y-1 text-xs">
-                            {format.vcodec && <p>Video: {format.vcodec}</p>}
-                            {format.acodec && <p>Audio: {format.acodec}</p>}
-                            {format.bitrate && <p>Bitrate: {format.bitrate}</p>}
-                            {format.fps && <p>FPS: {format.fps}</p>}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">{format.resolution}</div>
-                <div className="mt-2 flex items-center space-x-2">
-                  <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{format.ext}</span>
-                  <span className="text-xs px-2 py-0.5 bg-secondary rounded-full">{format.size}</span>
-                </div>
-              </div>
+      <div className="formats-table border border-gray-300 rounded-md overflow-hidden">
+        {/* Audio Formats */}
+        <div className="formats-section">
+          <div className="bg-gray-100 p-3 flex items-center">
+            <Volume2 className="mr-2" size={18} />
+            <span className="font-medium">Audio</span>
+          </div>
+          
+          <table className="w-full">
+            <tbody>
+              {sortedAudioFormats.slice(0, 2).map((format) => (
+                <tr 
+                  key={format.format_id} 
+                  className="border-t border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleSelectFormat(format)}
+                >
+                  <td className="py-3 px-4 border-r border-gray-200 w-1/3">
+                    {format.format_note || 'MP3'}
+                  </td>
+                  <td className="py-3 px-4 border-r border-gray-200 w-1/3 text-center">
+                    {getFormatSize(format)}
+                  </td>
+                  <td className="py-3 px-4 w-1/3">
+                    <button 
+                      className={`w-full py-2 px-3 rounded flex items-center justify-center ${
+                        selectedFormat?.format_id === format.format_id 
+                          ? 'bg-blue-400 text-white' 
+                          : 'bg-green-500 text-white'
+                      }`}
+                    >
+                      <Download size={16} className="mr-2" />
+                      DOWNLOAD
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Video Formats */}
+        <div className="formats-section">
+          <div className="bg-gray-100 p-3 flex items-center border-t border-gray-300">
+            <Video className="mr-2" size={18} />
+            <span className="font-medium">Video</span>
+          </div>
+          
+          <table className="w-full">
+            <tbody>
+              {sortedVideoFormats.slice(0, 5).map((format) => {
+                const isHD = (format.height || 0) >= 720;
+                const resolution = format.resolution?.split('x')[1] || format.format_note;
+                
+                return (
+                  <tr 
+                    key={format.format_id} 
+                    className="border-t border-gray-200 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleSelectFormat(format)}
+                  >
+                    <td className="py-3 px-4 border-r border-gray-200 w-1/3 flex items-center">
+                      <span>{resolution}p</span>
+                      {format.acodec !== 'none' && <Volume2 size={14} className="ml-2" />}
+                    </td>
+                    <td className="py-3 px-4 border-r border-gray-200 w-1/3 text-center">
+                      {getFormatSize(format)}
+                    </td>
+                    <td className="py-3 px-4 w-1/3">
+                      <button 
+                        className={`w-full py-2 px-3 rounded flex items-center justify-center ${
+                          selectedFormat?.format_id === format.format_id 
+                            ? 'bg-blue-400 text-white' 
+                            : isHD ? 'bg-orange-400 text-white' : 'bg-green-500 text-white'
+                        }`}
+                      >
+                        <Download size={16} className="mr-2" />
+                        DOWNLOAD
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
               
-              {selectedFormat?.format_id === format.format_id && (
-                <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                  <Check size={12} className="text-white" />
-                </div>
+              {sortedVideoFormats.length > 5 && (
+                <tr className="border-t border-gray-200">
+                  <td colSpan={3} className="py-3 px-4">
+                    <button className="w-full py-2 bg-green-500 text-white rounded">
+                      SHOW MORE
+                    </button>
+                  </td>
+                </tr>
               )}
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </motion.div>
   );
 };

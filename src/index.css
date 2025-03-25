@@ -79,7 +79,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-blue-50 text-foreground font-sans antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -120,6 +120,23 @@
   
   .loading-shimmer {
     @apply bg-shimmer-gradient bg-[length:200%_100%] animate-shimmer;
+  }
+  
+  /* YouTube downloader specific styles */
+  .search-container {
+    @apply rounded-lg overflow-hidden shadow-md;
+  }
+  
+  .search-input {
+    @apply bg-white text-gray-800;
+  }
+  
+  .search-button {
+    @apply bg-blue-400 hover:bg-blue-500 transition-colors;
+  }
+  
+  .formats-table {
+    @apply bg-white shadow-md;
   }
 }
 
