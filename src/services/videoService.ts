@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 // Set the API URL - in development it's localhost, but in production it might be different
@@ -72,10 +71,20 @@ export const fetchVideoInfo = async (url: string): Promise<VideoInfo> => {
     };
   } catch (error) {
     console.error('Error fetching video info:', error);
-    if (axios.isAxiosError(error) && !error.response) {
-      throw new Error('Cannot connect to the backend server. Make sure the server is running at ' + API_URL);
+    
+    // Provide more specific error messages based on error type
+    if (axios.isAxiosError(error)) {
+      if (!error.response) {
+        throw new Error(`Cannot connect to the backend server at ${API_URL}. Please check:\n1. Is the server running? (Run 'npm run dev:all' in the server directory)\n2. Is yt-dlp installed? (Check setup-guide.txt)\n3. Are you using the correct port?`);
+      } else if (error.response.status === 400) {
+        throw new Error('Please provide a valid YouTube URL');
+      } else if (error.response.status === 500) {
+        const errorMsg = error.response.data?.error || 'Server error processing your request';
+        throw new Error(`Server error: ${errorMsg}`);
+      }
     }
-    throw new Error('Failed to fetch video information');
+    
+    throw new Error('Failed to fetch video information. Make sure the backend server is running and yt-dlp is installed.');
   }
 };
 

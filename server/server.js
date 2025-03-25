@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const { spawn } = require('child_process');
@@ -17,12 +16,58 @@ app.use(cors());
 app.use(express.json());
 app.use('/downloads', express.static(downloadsDir));
 
+// Check if yt-dlp is installed
+const checkYtDlp = () => {
+  return new Promise((resolve, reject) => {
+    const ytdlp = spawn('yt-dlp', ['--version']);
+    
+    ytdlp.on('error', (error) => {
+      console.error('Error checking yt-dlp:', error.message);
+      reject(false);
+    });
+    
+    ytdlp.on('close', (code) => {
+      if (code === 0) {
+        resolve(true);
+      } else {
+        reject(false);
+      }
+    });
+  });
+};
+
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const ytdlpInstalled = await checkYtDlp();
+    return res.json({ 
+      status: 'ok',
+      ytdlp: ytdlpInstalled ? 'installed' : 'not installed'
+    });
+  } catch (error) {
+    return res.status(500).json({ 
+      status: 'error',
+      message: 'yt-dlp is not installed or not in PATH',
+      error: error.message
+    });
+  }
+});
+
 // Endpoint to get video info
-app.post('/api/video-info', (req, res) => {
+app.post('/api/video-info', async (req, res) => {
   const { url } = req.body;
   
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
+  }
+  
+  try {
+    // Check if yt-dlp is installed first
+    await checkYtDlp();
+  } catch (error) {
+    return res.status(500).json({ 
+      error: 'yt-dlp is not installed or not in PATH. Please install it following the setup guide.'
+    });
   }
   
   const ytdlp = spawn('yt-dlp', [
@@ -113,4 +158,6 @@ app.post('/api/download', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  console.log(`API endpoints available at http://localhost:${port}/api`);
+  console.log('Make sure yt-dlp is installed and in your PATH');
 });
